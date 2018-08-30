@@ -80,7 +80,6 @@ public class ReactNativeFingerprintScannerModule extends ReactContextBaseJavaMod
             @Override
             public void onSucceed() {
                 promise.resolve(true);
-
             }
 
             @Override
@@ -108,6 +107,7 @@ public class ReactNativeFingerprintScannerModule extends ReactContextBaseJavaMod
             @Override
             public void onStartFailedByDeviceLocked() {
                 // the first start failed because the device was locked temporarily
+                promise.reject("AuthenticationStartupLockout", "AuthenticationStartupLockout");
             }
         });
     }
