@@ -40,7 +40,7 @@ public class ReactNativeFingerprintScannerModule extends ReactContextBaseJavaMod
         this.release();
     }
 
-    private FingerprintIdentify getFingerprintIdentify() {
+    private FingerprintIdentify getFingerprintIdentify(final Promise promise) {
         if (mFingerprintIdentify != null) {
             return mFingerprintIdentify;
         }
@@ -49,6 +49,10 @@ public class ReactNativeFingerprintScannerModule extends ReactContextBaseJavaMod
                 new FingerprintIdentifyExceptionListener() {
                     @Override
                     public void onCatchException(Throwable exception) {
+                        if (promise != null) {
+                            proimse.reject("AuthenticationException", exception.getMessage());
+                        }
+
                         mReactContext.removeLifecycleEventListener(
                                 ReactNativeFingerprintScannerModule.this);
                     }
@@ -56,12 +60,12 @@ public class ReactNativeFingerprintScannerModule extends ReactContextBaseJavaMod
         return mFingerprintIdentify;
     }
 
-    private String getErrorMessage() {
-        if (!getFingerprintIdentify().isHardwareEnable()) {
+    private String getErrorMessage(final Promise promise) {
+        if (!getFingerprintIdentify(promise).isHardwareEnable()) {
             return "FingerprintScannerNotSupported";
-        } else if (!getFingerprintIdentify().isRegisteredFingerprint()) {
+        } else if (!getFingerprintIdentify(promise).isRegisteredFingerprint()) {
             return "FingerprintScannerNotEnrolled";
-        } else if (!getFingerprintIdentify().isFingerprintEnable()) {
+        } else if (!getFingerprintIdentify(promise).isFingerprintEnable()) {
             return "FingerprintScannerNotAvailable";
         }
         return null;
@@ -69,14 +73,14 @@ public class ReactNativeFingerprintScannerModule extends ReactContextBaseJavaMod
 
     @ReactMethod
     public void authenticate(final Promise promise) {
-        final String errorMessage = getErrorMessage();
+        final String errorMessage = getErrorMessage(promise);
         if (errorMessage != null) {
             promise.reject(errorMessage, errorMessage);
             return;
         }
 
-        getFingerprintIdentify().resumeIdentify();
-        getFingerprintIdentify().startIdentify(MAX_AVAILABLE_TIMES, new FingerprintIdentifyListener() {
+        getFingerprintIdentify(promise).resumeIdentify();
+        getFingerprintIdentify(promise).startIdentify(MAX_AVAILABLE_TIMES, new FingerprintIdentifyListener() {
             @Override
             public void onSucceed() {
                 promise.resolve(true);
@@ -113,15 +117,16 @@ public class ReactNativeFingerprintScannerModule extends ReactContextBaseJavaMod
     }
 
     @ReactMethod
-    public void release() {
-        getFingerprintIdentify().cancelIdentify();
+    public void release(final Promise promise) {
+        getFingerprintIdentify(promise).cancelIdentify();
         mFingerprintIdentify = null;
         mReactContext.removeLifecycleEventListener(this);
+        promise.resolve();
     }
 
     @ReactMethod
     public void isSensorAvailable(final Promise promise) {
-        String errorMessage = getErrorMessage();
+        String errorMessage = getErrorMessage(promise);
         if (errorMessage != null) {
             promise.reject(errorMessage, errorMessage);
         } else {
