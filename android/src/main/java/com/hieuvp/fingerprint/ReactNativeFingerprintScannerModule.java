@@ -50,7 +50,7 @@ public class ReactNativeFingerprintScannerModule extends ReactContextBaseJavaMod
                     @Override
                     public void onCatchException(Throwable exception) {
                         if (promise != null) {
-                            proimse.reject("AuthenticationException", exception.getMessage());
+                            promise.reject("AuthenticationException", exception.getMessage());
                         }
 
                         mReactContext.removeLifecycleEventListener(
@@ -117,11 +117,10 @@ public class ReactNativeFingerprintScannerModule extends ReactContextBaseJavaMod
     }
 
     @ReactMethod
-    public void release(final Promise promise) {
-        getFingerprintIdentify(promise).cancelIdentify();
+    public void release() {
+        getFingerprintIdentify(null).cancelIdentify();
         mFingerprintIdentify = null;
         mReactContext.removeLifecycleEventListener(this);
-        promise.resolve();
     }
 
     @ReactMethod
